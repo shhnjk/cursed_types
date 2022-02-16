@@ -119,7 +119,7 @@ document.body.appendChild(svg);
 
 ## document.createProcessingInstruction API
 
-[`document.createProcessingInstruction`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createProcessingInstruction) can create [processing instruction](https://developer.mozilla.org/en-US/docs/Web/API/ProcessingInstruction) node from given URL and content type. This node can be inserted to XML document (but not HTML document). Currently there is no Trusted Types check on `document.createProcessingInstruction`. This was found by [Masato](https://twitter.com/kinugawamasato).
+[`document.createProcessingInstruction`](https://developer.mozilla.org/en-US/docs/Web/API/Document/createProcessingInstruction) can create [processing instruction](https://developer.mozilla.org/en-US/docs/Web/API/ProcessingInstruction) node from given URL and content type. This node can be inserted to a document which is [valid as XML](https://twitter.com/kinugawamasato/status/1493901445103439876). Currently there is no Trusted Types check on `document.createProcessingInstruction`. This was found by [Masato](https://twitter.com/kinugawamasato).
 
 [PoC](https://shhnjk.github.io/PoCs/cursed_types/createProcessingInstruction.xml):
 ```
