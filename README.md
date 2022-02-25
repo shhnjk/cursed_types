@@ -142,7 +142,7 @@ document.insertBefore(pi, document.firstChild);
 
 ## XSLT
 
-Some elements in [XSLT](https://developer.mozilla.org/en-US/docs/Web/XSLT) supports `disable-output-escaping` (such as [`<xsl:text>`](https://developer.mozilla.org/en-US/docs/Web/XSLT/Element/text) and [`<xsl:value-of>`](https://developer.mozilla.org/en-US/docs/Web/XSLT/Element/value-of)). When `disable-output-escaping` is set to `yes`, escaping of HTML special characters will be disabled (and therefore XSS will be triggered). Currently, Trusted Types is bypassible in this case. This was found by [Alex](https://twitter.com/insertScript).
+Some elements in [XSLT](https://developer.mozilla.org/en-US/docs/Web/XSLT) supports `disable-output-escaping` attribute (such as [`<xsl:text>`](https://developer.mozilla.org/en-US/docs/Web/XSLT/Element/text) and [`<xsl:value-of>`](https://developer.mozilla.org/en-US/docs/Web/XSLT/Element/value-of)). When `disable-output-escaping` is set to `yes`, escaping of HTML special characters will be disabled (and therefore XSS will be triggered). Currently, Trusted Types is bypassible in this case. This was found by [Alex](https://twitter.com/insertScript).
 
 [PoC](https://shhnjk.github.io/PoCs/cursed_types/xslt.html):
 ```
